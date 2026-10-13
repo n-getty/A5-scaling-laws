@@ -1,0 +1,16 @@
+[project]
+name = "a5-scaling-laws"
+version = "0.1.0"
+description = "Hands-on materials for the A5 Scaling Laws workshop: analyze real IsoFLOP sweep data and predict compute-optimal training decisions."
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.0",
+    "matplotlib>=3.8",
+    "jupyter>=1.0",
+    "ipywidgets>=8.0",
+    "nbconvert>=7.0",
+]
+
+[tool.setuptools]
+packages = ["scaling_lib"]

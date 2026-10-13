@@ -1,0 +1,2 @@
+flops_budget,depth,model_dim,params_transformer,params_total,num_iterations,tokens_trained,val_bpb,core_score,train_time_sec
+6e17,14,896,134874656,399115836,975,191598592,0.935000,0.0920,4700

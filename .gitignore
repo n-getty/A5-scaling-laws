@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+*.egg-info/
+data/aurora_bonus_runs/
+aurora_bonus_job.log
