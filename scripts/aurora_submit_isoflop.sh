@@ -4,6 +4,7 @@
 #PBS -A ModCon
 #PBS -l select=1
 #PBS -l walltime=00:55:00
+#PBS -l filesystems=home:flare
 #PBS -j oe
 #PBS -o aurora_bonus_job.log
 
@@ -15,7 +16,9 @@
 # Submit with: qsub -v DEPTH=10,TARGET_FLOPS=5e16 aurora_submit_isoflop.sh
 # (02_live_training_bonus.ipynb does this for you via aurora_job_helpers.py)
 
-set -euo pipefail
+# NB: no `set -u` -- Lmod's init trips it at `module load` (unbound
+# ZSH_EVAL_CONTEXT), same gotcha documented in the vjepa2 reference scripts.
+set -eo pipefail
 
 DEPTH="${DEPTH:-10}"
 TARGET_FLOPS="${TARGET_FLOPS:-5e16}"
@@ -36,9 +39,16 @@ LOG_FILE="$RESULTS_DIR/${TAG}_train.log"
 
 # base_train.py has no --no-compile flag: it skips torch.compile automatically
 # when --device-type=xpu (inductor's Triton backend isn't reliable there yet).
+#
+# --device-batch-size=8: the default of 32 OOMs on a single Max 1550 tile (64GB) --
+# logits are computed in fp32 for the softcap+loss (gpt.py), so at seq_len=2048 and
+# vocab_size=65536 the activation memory for backward blows past capacity. Confirmed
+# via a live OOM trace on job 8925823/8925845: "Tried to allocate 16.00 GiB ... 54.07
+# GiB is allocated by PyTorch" right at loss.backward() on step 0.
 python -m scripts.base_train \
     --device-type=xpu \
     --depth="$DEPTH" \
+    --device-batch-size=8 \
     --target-flops="$TARGET_FLOPS" \
     --target-param-data-ratio=-1 \
     --run=dummy \
