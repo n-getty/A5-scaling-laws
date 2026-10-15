@@ -65,6 +65,41 @@ def quad_fit_min(log_x: np.ndarray, y: np.ndarray):
     return (a, b, c), x_min, y_min
 
 
+def isoflop_fits(df: pd.DataFrame) -> dict:
+    """Per-budget quadratic fit in log(effective_params) vs val_bpb.
+
+    Returns {budget: (coeffs, x_min, y_min)} as produced by quad_fit_min,
+    one entry per FLOPs budget present in df.
+    """
+    fits = {}
+    for budget, group in df.groupby("flops_budget"):
+        log_n = np.log10(group["effective_params"].values)
+        fits[budget] = quad_fit_min(log_n, group["val_bpb"].values)
+    return fits
+
+
+def isoflop_optimal_points(df: pd.DataFrame) -> pd.DataFrame:
+    """Fitted-minimum N*(C) and D*(C) per budget, where a real interior minimum exists.
+
+    D* follows from the N* fit via the standard C = 6ND approximation. Budgets
+    whose quadratic fit has no interior minimum (non-positive curvature, or a
+    vertex outside the tested range) are omitted.
+    """
+    rows = []
+    for budget, (_, x_min, y_min) in isoflop_fits(df).items():
+        if x_min is None:
+            continue
+        rows.append(
+            {
+                "flops_budget": budget,
+                "n_star": x_min,
+                "d_star": budget / (6.0 * x_min),
+                "val_bpb_min": y_min,
+            }
+        )
+    return pd.DataFrame(rows).sort_values("flops_budget").reset_index(drop=True)
+
+
 def allocation_table(df: pd.DataFrame) -> pd.DataFrame:
     """Per-budget 'what should we train next' table.
 
