@@ -24,3 +24,11 @@ Target: a large, mixed-experience audience, mostly on their own laptops.
   always a missing/expired `IRI_TOKEN_ALCF` or unset `ALCF_USERNAME`.
   Point them at `docs/SETUP.md`'s Aurora section, or just have them skip
   section 8 entirely.
+- **Notebook cell "hangs" forever on Aurora (PBS path):** before assuming
+  the submission code is broken, check whether this is really a stale
+  browser tab or a dropped SSH tunnel — the kernel itself is usually fine.
+  Have them reload the page (or reopen the `token=...` URL Jupyter printed
+  on the login node) and reconnect to the kernel. If the page won't load
+  at all, the tunnel from `docs/SETUP.md` likely needs restarting. This is
+  the single most common "it's stuck" report and is almost never a code
+  issue.

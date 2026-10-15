@@ -49,6 +49,48 @@ min walltime), polls for a bounded time, and falls back to a stored
 example point if the job hasn't finished yet — it will not hang
 indefinitely.
 
+**Reaching that Jupyter session from your laptop's browser:** Jupyter on
+the login node only binds to `localhost`, so you need an SSH tunnel.
+If you're using an editor with built-in remote-SSH support (VS Code,
+Antigravity, Cursor, ...), it forwards the port for you automatically —
+skip to the next section. From a plain terminal, do it by hand:
+
+1. On the Aurora login node, start Jupyter and note the port and token it
+   prints:
+
+   ```bash
+   cd ~/proj/A5-scaling-laws
+   jupyter notebook --no-browser --port=8888 notebooks/01_scaling_analysis.ipynb
+   ```
+
+   Look for a line like
+   `http://localhost:8888/tree?token=<long-token-string>` — copy that
+   whole URL, you'll need it in step 3.
+
+2. In a **second terminal on your laptop** (leave the one above running),
+   open a tunnel from a local port to that same port on the login node:
+
+   ```bash
+   ssh -N -L 8888:localhost:8888 <your-alcf-username>@aurora.alcf.anl.gov
+   ```
+
+   `-N` means "just forward the port, don't open a shell" — this command
+   will appear to hang with no output, which is expected; leave it
+   running for the rest of the session. (If you already have an `aurora`
+   entry in your `~/.ssh/config`, e.g. `ssh -N -L 8888:localhost:8888
+   aurora` works the same way.)
+
+3. Paste the full `http://localhost:8888/tree?token=...` URL from step 1
+   into your laptop's browser. You're now talking to the real Jupyter
+   server on the login node through the tunnel.
+
+If a cell ever looks stuck with no output and no error for an unusually
+long time, the most common cause is a stale browser tab or a tunnel that
+silently dropped — not the code itself. Reload the page (or reopen the
+`token=...` URL from step 1) and reconnect to the kernel before assuming
+something is actually broken; restart the SSH tunnel from step 2 if the
+page won't load at all.
+
 `QUEUE`/`ACCOUNT` in that same cell default to the hackathon reservation
 (`R8914313`) and allocation (`GenesisHackathonOct26`) — override them
 there if you're testing against a different queue/project (e.g. your own
