@@ -85,7 +85,10 @@ def parse_result_row(target_flops: str, depth: int) -> dict | None:
         return matches[-1] if matches else None
 
     val_bpb = last_match(r"Validation bpb:\s*([\d.]+)")
-    params_transformer = last_match(r"transformer_matrices:\s*([\d,]+)")
+    # Current nanochat pads this key with spaces before the colon
+    # (`transformer_matrices    : 49,152,300`), confirmed against job
+    # 8931623/8931625's real training logs -- a bare `:` match finds nothing.
+    params_transformer = last_match(r"transformer_matrices\s*:\s*([\d,]+)")
     num_iters = last_match(r"Calculated number of iterations[^\d]*(\d+)")
     if val_bpb is None or params_transformer is None or num_iters is None:
         return None

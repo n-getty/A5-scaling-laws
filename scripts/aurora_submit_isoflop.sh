@@ -33,10 +33,11 @@ cd "${NANOCHAT_REPO:-$PBS_O_WORKDIR/../nanochat}"
 module load frameworks
 
 export OMP_NUM_THREADS=1
-# Default to the shared Aurora data dir (tokenizer + base_data already staged there) --
-# $HOME/.cache/nanochat has no tokenizer.pkl and fails fast with FileNotFoundError
-# (confirmed on job 8925861) before ever reaching the training loop.
-export NANOCHAT_BASE_DIR="${NANOCHAT_BASE_DIR:-/flare/AuroraGPT/ngetty/data/nanochat}"
+# Default to the shared hackathon data dir (tokenizer + base_data staged there for
+# all participants) -- $HOME/.cache/nanochat has no tokenizer.pkl and fails fast
+# with FileNotFoundError (confirmed on job 8925861) before ever reaching the
+# training loop. A personal AuroraGPT path won't work for other participants.
+export NANOCHAT_BASE_DIR="${NANOCHAT_BASE_DIR:-/flare/GenesisHackathonOct26/ngetty/data/nanochat}"
 RESULTS_DIR="$PBS_O_WORKDIR/../data/aurora_bonus_runs"
 mkdir -p "$RESULTS_DIR"
 LOG_FILE="$RESULTS_DIR/${TAG}_train.log"

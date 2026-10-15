@@ -81,7 +81,12 @@ def submit_job(alcf_username: str, depth: int = 10, target_flops: str = "5e16",
 
     flare_project = flare_project or account
     tag = f"bonus_{target_flops}_d{depth}"
-    nanochat_dir = nanochat_dir or f"/home/{alcf_username}/proj/nanochat"
+    # Default assumes the standard clone layout: A5-scaling-laws checked out under
+    # ~/proj, with nanochat vendored as its submodule -- NOT a sibling ~/proj/nanochat
+    # checkout, which may be a stale/unrelated clone (confirmed root cause of job
+    # 8931316's ModuleNotFoundError: the IRI path picked up an unrelated personal
+    # karpathy/nanochat checkout instead of the repo's vendored, patched submodule).
+    nanochat_dir = nanochat_dir or f"/home/{alcf_username}/proj/A5-scaling-laws/nanochat"
     stdout_path = f"/flare/{flare_project}/{alcf_username}_{tag}.out"
     stderr_path = f"/flare/{flare_project}/{alcf_username}_{tag}.err"
 
@@ -98,7 +103,7 @@ def submit_job(alcf_username: str, depth: int = 10, target_flops: str = "5e16",
     commands = f"""
 module load frameworks
 export OMP_NUM_THREADS=1
-export NANOCHAT_BASE_DIR="${{NANOCHAT_BASE_DIR:-/flare/AuroraGPT/ngetty/data/nanochat}}"
+export NANOCHAT_BASE_DIR="${{NANOCHAT_BASE_DIR:-/flare/GenesisHackathonOct26/ngetty/data/nanochat}}"
 cd {nanochat_dir}
 {train_cmd}
 """
@@ -186,6 +191,13 @@ def _view_file(file_path: str) -> str:
             if isinstance(result, str):
                 return result
             if isinstance(result, dict):
+                # Live API nests content as result.output.content (confirmed
+                # against job 8931625's real output) -- check that shape first,
+                # then fall back to a flatter content/data key in case the API
+                # changes shape again.
+                output = result.get("output")
+                if isinstance(output, dict) and output.get("content"):
+                    return output["content"]
                 return result.get("content") or result.get("data") or ""
             return ""
     return ""
@@ -204,7 +216,10 @@ def parse_result_row(stdout_path: str, target_flops: str, depth: int) -> "dict |
         return matches[-1] if matches else None
 
     val_bpb = last_match(r"Validation bpb:\s*([\d.]+)")
-    params_transformer = last_match(r"transformer_matrices:\s*([\d,]+)")
+    # Current nanochat pads this key with spaces before the colon
+    # (`transformer_matrices    : 49,152,300`), confirmed against job
+    # 8931623/8931625's real training logs -- a bare `:` match finds nothing.
+    params_transformer = last_match(r"transformer_matrices\s*:\s*([\d,]+)")
     num_iters = last_match(r"Calculated number of iterations[^\d]*(\d+)")
     if val_bpb is None or params_transformer is None or num_iters is None:
         return None
