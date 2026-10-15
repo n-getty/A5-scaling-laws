@@ -85,22 +85,22 @@ def submit_job(alcf_username: str, depth: int = 10, target_flops: str = "5e16",
     stdout_path = f"/flare/{flare_project}/{alcf_username}_{tag}.out"
     stderr_path = f"/flare/{flare_project}/{alcf_username}_{tag}.err"
 
+    # No backslash-newline continuations here -- the IRI API parses this string
+    # server-side as part of a GraphQL mutation, and a trailing `\` before a
+    # newline breaks its parser (GRAPHQL_PARSE_FAILED), confirmed against the
+    # live API. Keep the training command on one line.
+    train_cmd = (
+        "python -m scripts.base_train --device-type=xpu "
+        f"--depth={depth} --device-batch-size=8 --target-flops={target_flops} "
+        "--target-param-data-ratio=-1 --run=dummy "
+        f"--model-tag={tag} --core-metric-every=-1 --sample-every=-1 --save-every=-1"
+    )
     commands = f"""
 module load frameworks
 export OMP_NUM_THREADS=1
 export NANOCHAT_BASE_DIR="${{NANOCHAT_BASE_DIR:-/flare/AuroraGPT/ngetty/data/nanochat}}"
 cd {nanochat_dir}
-python -m scripts.base_train \\
-    --device-type=xpu \\
-    --depth={depth} \\
-    --device-batch-size=8 \\
-    --target-flops={target_flops} \\
-    --target-param-data-ratio=-1 \\
-    --run=dummy \\
-    --model-tag={tag} \\
-    --core-metric-every=-1 \\
-    --sample-every=-1 \\
-    --save-every=-1
+{train_cmd}
 """
 
     payload = {
@@ -121,7 +121,10 @@ python -m scripts.base_train \\
         f"{BASE_URL}/compute/job/{AURORA_COMPUTE_RESOURCE_ID}",
         json=payload, headers=_headers(token),
     )
-    response.raise_for_status()
+    if not response.ok:
+        raise RuntimeError(
+            f"IRI job submission failed ({response.status_code}): {response.text}"
+        )
     body = response.json()
     job_id = body.get("id")
     if not job_id:
@@ -137,7 +140,10 @@ def job_status(job_id: str) -> str:
         f"{BASE_URL}/compute/status/{AURORA_COMPUTE_RESOURCE_ID}/{job_id}",
         headers=_headers(token),
     )
-    response.raise_for_status()
+    if not response.ok:
+        raise RuntimeError(
+            f"IRI job status check failed ({response.status_code}): {response.text}"
+        )
     return response.json().get("status", {}).get("state", "unknown")
 
 
@@ -164,7 +170,10 @@ def _view_file(file_path: str) -> str:
         params={"path": file_path, "size": 1_000_000, "offset": 0},
         headers=_headers(token),
     )
-    response.raise_for_status()
+    if not response.ok:
+        raise RuntimeError(
+            f"IRI filesystem view failed ({response.status_code}): {response.text}"
+        )
     task_id = response.json().get("task_id")
     if not task_id:
         return ""
