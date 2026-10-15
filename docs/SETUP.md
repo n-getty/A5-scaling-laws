@@ -49,6 +49,11 @@ min walltime), polls for a bounded time, and falls back to a stored
 example point if the job hasn't finished yet — it will not hang
 indefinitely.
 
+`QUEUE`/`ACCOUNT` in that same cell default to the hackathon reservation
+(`R8914313`) and allocation (`GenesisHackathonOct26`) — override them
+there if you're testing against a different queue/project (e.g. your own
+account's debug queue) instead of the shared hackathon reservation.
+
 ### Option B: IRI API, from anywhere (including your laptop)
 
 The [DOE IRI Facility API](https://github.com/doe-iri/iri-facility-api-examples/tree/main/genesis_hackathon)
@@ -71,7 +76,9 @@ alcf-tokens get-token iri
 
 In section 8, set `METHOD = "iri"` and `ALCF_USERNAME` to your ALCF
 username, then run those cells. Same polling/fallback behavior as the PBS
-path.
+path. `QUEUE`/`ACCOUNT` default to the hackathon reservation/allocation
+here too; override them (and `FLARE_PROJECT`, if your Flare project
+directory differs from `ACCOUNT`) for personal testing.
 
 **If you don't have Aurora access or an IRI token:** skip section 8
 entirely. Nothing in the core exercise (sections 1–7) depends on it.

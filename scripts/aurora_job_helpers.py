@@ -17,16 +17,29 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 SUBMIT_SCRIPT = SCRIPT_DIR / "aurora_submit_isoflop.sh"
 RESULTS_DIR = SCRIPT_DIR.parent / "data" / "aurora_bonus_runs"
 
+# Defaults match the #PBS directives baked into aurora_submit_isoflop.sh (the
+# hackathon reservation/allocation). Pass queue/account to submit_job() to
+# override them per-call -- qsub's -q/-A flags take precedence over the
+# script's own #PBS directives, so this needs no change to the .sh file.
+DEFAULT_QUEUE = "R8914313"
+DEFAULT_ACCOUNT = "GenesisHackathonOct26"
+
 
 def on_pbs_system() -> bool:
     """True if qsub/qstat are available on this machine."""
     return shutil.which("qsub") is not None and shutil.which("qstat") is not None
 
 
-def submit_job(depth: int = 10, target_flops: str = "5e16") -> str:
-    """Submit one IsoFLOP sweep point to the hackathon reservation. Returns the PBS job id."""
+def submit_job(depth: int = 10, target_flops: str = "5e16",
+                queue: str = DEFAULT_QUEUE, account: str = DEFAULT_ACCOUNT) -> str:
+    """Submit one IsoFLOP sweep point. Returns the PBS job id.
+
+    queue/account default to the hackathon reservation/allocation but can be
+    overridden (e.g. for personal testing against a different queue/project).
+    """
     result = subprocess.run(
-        ["qsub", "-v", f"DEPTH={depth},TARGET_FLOPS={target_flops}", str(SUBMIT_SCRIPT)],
+        ["qsub", "-q", queue, "-A", account,
+         "-v", f"DEPTH={depth},TARGET_FLOPS={target_flops}", str(SUBMIT_SCRIPT)],
         capture_output=True, text=True, check=True,
     )
     return result.stdout.strip()

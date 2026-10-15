@@ -56,12 +56,18 @@ def _headers(token):
 
 
 def submit_job(alcf_username: str, depth: int = 10, target_flops: str = "5e16",
-               nanochat_dir: "str | None" = None):
+               nanochat_dir: "str | None" = None,
+               queue: str = RESERVATION_QUEUE, account: str = ALLOCATION,
+               flare_project: "str | None" = None):
     """Submit one IsoFLOP sweep point to Aurora via the IRI API.
 
-    Runs the same training command as aurora_submit_isoflop.sh, targeting the
-    GenesisHackathonOct26 reservation/allocation, but through the IRI API's
-    job-submission endpoint instead of a local qsub call. Returns
+    Runs the same training command as aurora_submit_isoflop.sh through the
+    IRI API's job-submission endpoint instead of a local qsub call. queue/
+    account default to the hackathon reservation/allocation but can be
+    overridden (e.g. for personal testing against a different queue/
+    project). flare_project controls the stdout/stderr directory on the
+    Flare filesystem and defaults to `account` -- override it separately if
+    your Flare project directory differs from your billing account. Returns
     (job_id, stdout_path) -- stdout_path is needed later to fetch the result
     via the filesystem API.
     """
@@ -73,10 +79,11 @@ def submit_job(alcf_username: str, depth: int = 10, target_flops: str = "5e16",
     if not alcf_username:
         raise ValueError("alcf_username is required (used for stdout/stderr paths).")
 
+    flare_project = flare_project or account
     tag = f"bonus_{target_flops}_d{depth}"
     nanochat_dir = nanochat_dir or f"/home/{alcf_username}/proj/nanochat"
-    stdout_path = f"/flare/{ALLOCATION}/{alcf_username}_{tag}.out"
-    stderr_path = f"/flare/{ALLOCATION}/{alcf_username}_{tag}.err"
+    stdout_path = f"/flare/{flare_project}/{alcf_username}_{tag}.out"
+    stderr_path = f"/flare/{flare_project}/{alcf_username}_{tag}.err"
 
     commands = f"""
 module load frameworks
@@ -105,8 +112,8 @@ python -m scripts.base_train \\
         "resources": {"node_count": 1},
         "attributes": {
             "duration": WALLTIME_SEC,
-            "queue_name": RESERVATION_QUEUE,
-            "account": ALLOCATION,
+            "queue_name": queue,
+            "account": account,
             "custom_attributes": {"filesystems": "flare"},
         },
     }
