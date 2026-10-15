@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -N a5_isoflop_bonus
-#PBS -q debug
-#PBS -A ModCon
+#PBS -q R8914313
+#PBS -A GenesisHackathonOct26
 #PBS -l select=1
 #PBS -l walltime=00:55:00
 #PBS -l filesystems=home:flare
@@ -9,9 +9,10 @@
 #PBS -o aurora_bonus_job.log
 
 # Single IsoFLOP sweep point for the A5 Scaling Laws hands-on bonus notebook.
-# Targets Aurora's `debug` queue (1 node, <=1hr walltime), billed to the
-# ModCon allocation. Run depth/budget are kept small so the run plausibly
-# finishes inside the debug queue's walltime cap on XPU.
+# Targets the GenesisHackathonOct26 reservation (queue R8914313, 500 nodes,
+# Wed 9am CT - Fri 5pm CT), billed to the GenesisHackathonOct26 allocation --
+# this is what hackathon participant accounts are authorized for. Run
+# depth/budget are kept small so the run plausibly finishes within an hour.
 #
 # Submit with: qsub -v DEPTH=10,TARGET_FLOPS=5e16 aurora_submit_isoflop.sh
 # (02_live_training_bonus.ipynb does this for you via aurora_job_helpers.py)
