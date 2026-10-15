@@ -5,3 +5,4 @@ __pycache__/
 *.egg-info/
 data/aurora_bonus_runs/
 aurora_bonus_job.log
+.env

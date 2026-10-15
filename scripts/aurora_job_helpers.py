@@ -1,9 +1,11 @@
 """Thin wrappers around qsub/qstat for the optional Aurora live-training bonus.
 
-Used by notebooks/02_live_training_bonus.ipynb. Not required for the core
-workshop notebook, and does nothing useful off of Aurora (or any other PBS
-system with a `debug` queue and `ModCon` allocation) — callers should check
-`on_pbs_system()` first and fall back to stored data otherwise.
+Used by the live-training section of notebooks/01_scaling_analysis.ipynb. Not
+required for the rest of that notebook, and does nothing useful off of a
+system with `qsub`/`qstat` and access to the GenesisHackathonOct26
+reservation/allocation (see aurora_submit_isoflop.sh) — callers should check
+`on_pbs_system()` first and fall back to stored data, or to
+iri_job_helpers.py's IRI API path, otherwise.
 """
 import re
 import shutil
@@ -22,7 +24,7 @@ def on_pbs_system() -> bool:
 
 
 def submit_job(depth: int = 10, target_flops: str = "5e16") -> str:
-    """Submit one IsoFLOP sweep point to the debug queue. Returns the PBS job id."""
+    """Submit one IsoFLOP sweep point to the hackathon reservation. Returns the PBS job id."""
     result = subprocess.run(
         ["qsub", "-v", f"DEPTH={depth},TARGET_FLOPS={target_flops}", str(SUBMIT_SCRIPT)],
         capture_output=True, text=True, check=True,

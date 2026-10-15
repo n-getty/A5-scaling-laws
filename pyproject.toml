@@ -12,5 +12,13 @@ dependencies = [
     "nbconvert>=7.0",
 ]
 
+[project.optional-dependencies]
+# Only needed for the optional IRI API submission path in section 8 of
+# 01_scaling_analysis.ipynb -- the PBS (qsub) path needs neither.
+iri = [
+    "requests>=2.31",
+    "python-dotenv>=1.0",
+]
+
 [tool.setuptools]
 packages = ["scaling_lib"]
